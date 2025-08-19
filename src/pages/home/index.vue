@@ -17,7 +17,7 @@
           type="primary" 
           text="开始番茄钟"
           v-if="!isRunning && !isPaused"
-          @click="startTimer"
+          @click="showTaskInput = true"
         ></u-button>
         
         <block v-else>
@@ -36,18 +36,22 @@
       </view>
       
       <view class="statistics mt-40">
+        <!-- 在统计卡片标题旁添加刷新按钮 -->
         <u-card title="今日统计">
-          <view class="statistics-content">
-            <view class="stat-item">
-              <text class="label">完成次数</text>
-              <text class="value">{{ store.todayStats.completedCount }}</text>
+          <template #body>
+            <view class="statistics-content">
+              <view class="stat-item">
+                <text class="label">完成次数</text>
+                <text class="value">{{ store.todayStats.completedCount }}</text>
+              </view>
+              <view class="stat-item">
+                <text class="label">专注时长</text>
+                <text class="value">{{ formatDuration(store.todayStats.totalMinutes) }}</text>
+              </view>
             </view>
-            <view class="stat-item">
-              <text class="label">专注时长</text>
-              <text class="value">{{ formatDuration(store.todayStats.totalMinutes) }}</text>
-            </view>
-          </view>
+          </template>
         </u-card>
+
       </view>
     </view>
 
@@ -100,11 +104,55 @@
         <text>休息时间结束，要开始下一个番茄钟吗？</text>
       </view>
     </u-modal>
+
+    <!-- 任务输入弹窗 -->
+    <u-popup :show="showTaskInput" @close="showTaskInput = false" mode="center">
+      <view class="settings-popup">
+        <view class="settings-title">添加任务</view>
+        <view class="settings-content">
+          <u-form :model="taskForm" labelWidth="80">
+            <u-form-item label="任务标题">
+              <u-input 
+                v-model="taskForm.title" 
+                placeholder="请输入任务标题"
+                :clearable="true"
+              />
+            </u-form-item>
+            <u-form-item label="目标内容">                 
+              <view class="frequent-titles" v-if="store.frequentTitles.length > 0">
+                <view class="frequent-title-tags">
+                  <u-tag 
+                    v-for="title in store.frequentTitles" 
+                    :key="title.id"
+                    :text="title.title"
+                    @click="selectFrequentTitle(title.title)"
+                    size="mini"
+                    mode="light"
+                    class="mr-10 mb-10"
+                  ></u-tag>
+                </view>
+              </view>
+            </u-form-item>
+            <u-form-item label="目标内容">
+              <u-textarea 
+                v-model="taskForm.goal" 
+                placeholder="请输入目标内容"
+                :count="true"
+                :maxlength="200"
+              ></u-textarea>
+            </u-form-item>
+          </u-form>
+        </view>
+        <view class="settings-footer">
+          <u-button type="primary" text="开始" @click="startTimerWithTask"></u-button>
+        </view>
+      </view>
+    </u-popup>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import { usePomodoroStore } from '@/pinia/pomodoro';
 
 const store = usePomodoroStore();
@@ -116,8 +164,15 @@ const currentTime = ref(10); // 修改为10秒
 const showRestModal = ref(false);
 const showWorkModal = ref(false);
 const showSettings = ref(false);
+const showTaskInput = ref(false); // 添加任务输入弹窗显示状态
 const timer = ref<number | null>(null);
 const isRestTime = ref(false);
+
+// 任务表单
+const taskForm = ref({
+  title: '',
+  goal: ''
+});
 
 // 临时设置
 const tempSettings = ref({ ...store.settings });
@@ -126,6 +181,89 @@ const tempSettings = ref({ ...store.settings });
 onMounted(async () => {
   await store.init();
   currentTime.value = store.settings.countdownDuration;
+  
+  // 添加调试代码
+  console.log('todayStats:', JSON.stringify(store.todayStats));
+  
+  // 添加假数据到今日统计
+  console.log('添加假数据到今日统计');
+  
+  // 创建一些假任务
+  const fakeTasks = [
+    {
+      id: '1',
+      title: '学习Vue 3',
+      goal: '掌握组合式API和响应式系统',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: '2',
+      title: '开发番茄钟应用',
+      goal: '实现基本功能和UI界面',
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: '3',
+      title: '阅读技术文档',
+      goal: '了解最新前端发展趋势',
+      createdAt: new Date().toISOString()
+    }
+  ];
+  
+  // // 将假任务添加到store中
+  // store.tasks = fakeTasks;
+  
+  // 创建假记录
+  const fakeRecords = [
+    {
+      duration: 25,
+      type: 'completed',
+      timestamp: new Date().toISOString(),
+      taskId: '1',
+      title: '学习Vue 3'
+    },
+    {
+      duration: 15,
+      type: 'interrupted',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      taskId: '2',
+      title: '开发番茄钟应用'
+    },
+    {
+      duration: 25,
+      type: 'completed',
+      timestamp: new Date(Date.now() - 7200000).toISOString(),
+      taskId: '3',
+      title: '阅读技术文档'
+    },
+    {
+      duration: 25,
+      type: 'completed',
+      timestamp: new Date(Date.now() - 10800000).toISOString(),
+      taskId: '1',
+      title: '学习Vue 3'
+    }
+  ];
+  
+  // 更新今日统计数据
+  // store.todayStats = {
+  //   records: fakeRecords,
+  //   completedCount: 3,  // 3个已完成的番茄钟
+  //   totalMinutes: 90,   // 总共90分钟
+  //   date: new Date().toISOString().split('T')[0]
+  // };
+  
+  // 更新或添加今日数据到统计列表
+  const todayIndex = store.stats.findIndex(s => s.date === store.todayStats.date);
+  if (todayIndex >= 0) {
+    store.stats[todayIndex] = { ...store.todayStats };
+  } else {
+    store.stats.push({ ...store.todayStats });
+  }
+  
+  // 保存到本地存储
+  uni.setStorageSync('pomodoroStats', JSON.stringify(store.stats));
+  uni.setStorageSync('pomodoroTasks', JSON.stringify(store.tasks));
 });
 
 // 格式化时间显示
@@ -136,10 +274,16 @@ const formatTime = (seconds: number) => {
 };
 
 // 格式化持续时间
-const formatDuration = (minutes: number) => {
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return hours > 0 ? `${hours}小时${remainingMinutes}分钟` : `${remainingMinutes}分钟`;
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  
+  let result = '';
+  if (hours > 0) result += `${hours}小时`;
+  if (minutes > 0) result += `${minutes}分钟`;
+  if (remainingSeconds > 0 || (!hours && !minutes)) result += `${remainingSeconds}秒`;
+  return result;
 };
 
 // 播放提示音
@@ -151,8 +295,16 @@ const playSound = () => {
   }
 };
 
-// 开始计时
+// 开始计时（原方法）
 const startTimer = () => {
+  // 如果不是休息时间，创建新任务
+  if (!isRestTime.value) {
+    store.createTask(taskForm.value.title || '未命名任务', taskForm.value.goal);
+    // 清空表单
+    taskForm.value.title = '';
+    taskForm.value.goal = '';
+  }
+  
   isRunning.value = true;
   currentTime.value = isRestTime.value ? store.settings.restCountdownDuration : store.settings.countdownDuration;
   timer.value = setInterval(() => {
@@ -166,6 +318,12 @@ const startTimer = () => {
       }
     }
   }, 1000);
+};
+
+// 带任务的开始计时（新方法）
+const startTimerWithTask = () => {
+  showTaskInput.value = false; // 关闭任务输入弹窗
+  startTimer(); // 调用原有的开始计时方法
 };
 
 // 暂停/继续
@@ -199,7 +357,7 @@ const stopTimer = () => {
 const completePomodoro = () => {
   clearInterval(timer.value!);
   isRunning.value = false;
-  store.recordPomodoro(store.settings.countdownDuration / 60, 'completed');
+  store.recordPomodoro(store.settings.countdownDuration, 'completed');
   showRestModal.value = true;
   playSound();
   uni.vibrateLong();
@@ -231,6 +389,11 @@ const startNextPomodoro = () => {
   startTimer();
 };
 
+// 选择常用标题
+const selectFrequentTitle = (title: string) => {
+  taskForm.value.title = title;
+};
+
 // 保存设置
 const saveSettings = () => {
   store.saveSettings(tempSettings.value);
@@ -238,6 +401,14 @@ const saveSettings = () => {
   showSettings.value = false;
   uni.showToast({
     title: '设置已保存',
+    icon: 'success'
+  });
+};
+// 添加刷新方法
+const refreshStats = async () => {
+  await store.init();
+  uni.showToast({
+    title: '数据已刷新',
     icon: 'success'
   });
 };

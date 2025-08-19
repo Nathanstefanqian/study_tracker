@@ -3,11 +3,83 @@
     {
       "path": "pages/home/index",
       "style": {
-        "navigationBarTitleText": "首页",
+        "navigationBarTitleText": "番茄钟",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/todo/index",
+      "style": {
+        "navigationBarTitleText": "待办事项",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/ranking/index",
+      "style": {
+        "navigationBarTitleText": "排行榜",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/diary/index",
+      "style": {
+        "navigationBarTitleText": "日记",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/task-detail/index",
+      "style": {
+        "navigationBarTitleText": "任务详情",
         "navigationStyle": "custom"
       }
     }
   ],
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#018d71",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "番茄钟",
+        "iconPath": "static/home.png",
+        "selectedIconPath": "static/home-active.png"
+      },
+      {
+        "pagePath": "pages/todo/index",
+        "text": "待办事项",
+        "iconPath": "static/home.png",
+        "selectedIconPath": "static/home-active.png"
+      },
+      {
+        "pagePath": "pages/ranking/index",
+        "text": "排行榜",
+        "iconPath": "static/home.png",
+        "selectedIconPath": "static/home-active.png"
+      },
+      {
+        "pagePath": "pages/diary/index",
+        "text": "日记",
+        "iconPath": "static/home.png",
+        "selectedIconPath": "static/home-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/home.png",
+        "selectedIconPath": "static/home-active.png"
+      }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "uni-app",
